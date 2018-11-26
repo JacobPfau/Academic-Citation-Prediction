@@ -6,11 +6,12 @@ import numpy as np
 def Euc_Dist(X,Y):
 	return sum( [(X[i]-Y[i])**2 for i in range(len(X))] )**0.5
 
-def Max_Sim(node,node_list,features,node_dict,n=5):
-	index_node = node_dict[node]
-	indices = [node_dict[node] for node in node_list]
-	d = sorted([Euc_Dist( features(index_node), features(i) ) for i in indices])
-	return d[:n]
+def Max_Sim(source_ID,target_ID,features,graph,node_dict,n=5):
+	index_source = node_dict[source_ID]
+	citers_IDs = graph.predecessors(target_ID)
+    indices_citers = [node_dict[node] for node in citers_IDs]
+	d = sorted([Euc_Dist( features(index_source), features(i) ) for i in indices_citers])
+	return np.array(d[:n])
 
 ##############################################################
 #Papers with similar abstracts that also cite the target node
