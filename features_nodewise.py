@@ -1,5 +1,6 @@
 from sklearn.feature_extraction.text import TfidfVectorizer as Vectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.preprocessing import Normalizer
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import TruncatedSVD
 from sklearn.neighbors import KDTree
@@ -27,7 +28,7 @@ def LSA(tfidf,n_components=100):
 ##############################################################
 #KDtree
 
-def KDtree(features)
+def KDtree(features):
 	return KDTree(features_LSA)
 
 ##############################################################

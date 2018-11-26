@@ -1,4 +1,5 @@
 import igraph
+from sklearn.feature_extraction.text import TfidfVectorizer as Vectorizer
 
 ##############################################################
 #tfidf
@@ -9,13 +10,16 @@ def tfidf(corpus,df=0.5,feats=10000):
 
 	print ("n_samples: %d, n_features: %d" % X.shape)
 
-    return X
+	return X
 
 ##############################################################
 #node dictionary
 
-def to_dict(node_info):
-	return dict(zip( [element[0] for element in node_info],range(len(node_info)) ))
+def to_dict(k,v):
+	"""
+	zips keys, k, with values, v into dict
+	"""
+	return dict(zip( k,v ))
 
 ##############################################################
 #Create igraph (article -> article)
@@ -26,7 +30,7 @@ def article_graph(node_IDs, edges):
     g = igraph.Graph(directed=True)
  
     ## add vertices
-    g.add_vertices(nodes)
+    g.add_vertices(node_IDs)
  
     ## add edges
     g.add_edges(edges)
