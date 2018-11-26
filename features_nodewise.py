@@ -25,9 +25,15 @@ Staging a file in Git’s terminology means adding it to the staging area, in pr
 
 	return features_LSA
 
-##############################################################
+##############################################################\
 #KDtree
 
 def KDtree(features)
-	return KDTree(features_LSA)
+	return KDTree(features_LSA)\
 
+##############################################################
+#Test
+def test():
+    return 0
+#
+##############################################################\
