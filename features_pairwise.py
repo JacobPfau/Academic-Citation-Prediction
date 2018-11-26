@@ -1,3 +1,5 @@
+import numpy as np
+
 ##############################################################
 #N-Max-Similarity
 
@@ -13,14 +15,30 @@ def Max_Sim(node,node_list,features,node_dict,n=5):
 ##############################################################
 #Papers with similar abstracts that also cite the target node
 
-def Get_K_NN(node,kdtree,node_dict,k_val=20):
+def Get_K_NN(node_ID,kdtree,node_dict,index_dict,k_val=20):
     """
+    @node_dict param3: keys are node_IDs, values are node indices
+    @index_dict param4: keys are node indices, values are node_IDs
     @return: pair (indices,distances) of k_val nearest abstracts
     """
 
-    index_node = node_dict[node]
-    dist, ind = kdtree.query(X[:1], k=k_val) 
-    return (ind,dist)
+    index_node = node_dict[node_ID]
+    dist, ind = kdtree.query([index_node], k=k_val)
+    IDs = [index_dict[i] for i in ind] 
+    return (IDs,dist)
+
+def Citation_Check(source_ID,target_ID,kdtree,graph,node_dict,index_dict,k=20):
+	"""
+	@return: numpy array [% KNN of source which cite target, % KNN of target which are cited by source]
+	"""
+	close_source = Get_K_NN(source_ID,kdtree,node_dict,index_dict,k_val=k)
+	close_target = Get_K_NN(target_ID,kdtree,node_dict,index_dict,k_val=k)
+	cite_percent = len([n for n in close_source if graph.are_connected(n,target_ID)])/len(close_source)
+	cited_percent = len([n for n in close_target if graph.are_connected(source_ID,n)])/len(close_target)
+
+	return np.array([cite_percent,cited_percent])
+
+
 
 ##############################################################
 # Peer popularity
