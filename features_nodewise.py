@@ -2,6 +2,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer as Vectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import TruncatedSVD
+from sklearn.neighbors import KDTree
 
 ##############################################################
 #LSA
@@ -25,3 +26,8 @@ Staging a file in Git’s terminology means adding it to the staging area, in pr
 	return features_LSA
 
 ##############################################################
+#KDtree
+
+def KDtree(features)
+	return KDTree(features_LSA)
+
