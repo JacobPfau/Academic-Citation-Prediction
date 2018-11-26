@@ -21,3 +21,17 @@ def Get_K_NN(node,kdtree,node_dict,k_val=20):
     index_node = node_dict[node]
     dist, ind = kdtree.query(X[:1], k=k_val) 
     return (ind,dist)
+
+##############################################################
+# Peer popularity
+#
+# Estimates the "popularity" of node c in the surrounding of node n.
+# Returns the percentange of how many (back & forward) neighbours of n cite c?
+# Let N be all nodes w such that an edge (w,n) or (n,w) exists.
+# Return value: |{w in N s.t. exists edge (w,c)}| / |N|
+def peer_popularity(graph, source_ID, target_ID):
+    cites = 0
+    for w in graph.neighbors(source):
+        if graph.are_connected(w,target):
+            cites += 1
+    return cites/graph.neighborhood_size(source)
