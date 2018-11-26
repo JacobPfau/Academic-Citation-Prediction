@@ -7,6 +7,8 @@ from sklearn.decomposition import TruncatedSVD
 #LSA
 
 def LSA(tfidf,n_components=100):
+Staging a file in Git’s terminology means adding it to the staging area, in preparation for a commit.
+
 
 	print("Performing dimensionality reduction using LSA")
 
