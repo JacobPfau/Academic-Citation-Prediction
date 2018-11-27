@@ -58,7 +58,7 @@ def Citation_Check(source_ID,target_ID,kdtree,features,graph,node_dict,index_dic
 # Return value: |{w in N s.t. exists edge (w,c)}| / |N|
 def peer_popularity(graph, source_ID, target_ID):
     cites = 0
-    for w in graph.neighbors(source):
-        if graph.are_connected(w,target):
+    for w in graph.neighbors(source_ID):
+        if graph.are_connected(w,target_ID):
             cites += 1
-    return cites/graph.neighborhood_size(source)
+    return cites/graph.neighborhood_size(source_ID)
