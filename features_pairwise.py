@@ -62,3 +62,9 @@ def peer_popularity(graph, source_ID, target_ID):
         if graph.are_connected(w,target_ID):
             cites += 1
     return cites/graph.neighborhood_size(source_ID)
+
+##############################################################
+# Share edge
+
+def edge_check(source_ID, target_ID, graph):
+	return graph.get_eid(source_ID,target_ID,directed=True,error=False)!=-1
