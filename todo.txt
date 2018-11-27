@@ -1,0 +1,14 @@
+Features:
+Node Degree
+Distance between nodes
+successors(source) intersect successors of predecessors of target
+word2vec online train+doc2vec distances
+
+Preprocessing:
+author connection graph
+journal citation statistics
+
+ML:
+decision tree
+
+
