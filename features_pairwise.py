@@ -13,9 +13,13 @@ def Max_Sim(source_ID,target_ID,features,graph,node_dict,n=5):
     indices_citers = [node_dict[node] for node in citers_IDs]
     d = sorted([Euc_Dist( features[index_source], features[i] ) for i in indices_citers],reverse=True)
     if len(d)>=n:
-    	return np.array(d[:n])
+    	d=d[:n]
+    	d.append(np.mean(d))
+    	return np.array(d)
     else:
     	d.extend([0 for i in range(n-len(d))])
+    	d.append(np.mean(d))
+
     	return np.array( d )
 
 ##############################################################
@@ -67,4 +71,21 @@ def peer_popularity(graph, source_ID, target_ID):
 # Share edge
 
 def edge_check(source_ID, target_ID, graph):
-	return graph.get_eid(source_ID,target_ID,directed=True,error=False)!=-1
+	return int(graph.get_eid(source_ID,target_ID,directed=True,error=False)!=-1)
+
+##############################################################
+# LSA similarity
+
+def LSA_distance(source_ID,target_ID,node_dict,LSA_array):
+	index_source = node_dict[source_ID]
+	index_target = node_dict[target_ID]
+	return Euc_Dist(LSA_array[index_source],LSA_array[index_target])
+
+##############################################################
+#Node degree
+"""
+@returns: length 4 array containing IN degree and OUT degree for source and target
+"""
+
+def node_degree(source_ID,target_ID,graph):
+	return np.array([graph.degree(source_ID,mode='IN'),graph.degree(source_ID,mode='OUT'),graph.degree(target_ID,mode='IN'),graph.degree(target_ID,mode='OUT')])

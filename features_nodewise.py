@@ -4,6 +4,7 @@ from sklearn.preprocessing import Normalizer
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import TruncatedSVD
 from sklearn.neighbors import KDTree
+import numpy as np
 
 ##############################################################
 #LSA
@@ -32,3 +33,10 @@ def KDtree(features):
 	return KDTree(features_LSA)
 
 ##############################################################
+#Node degree
+"""
+@returns: length 2 array containing IN degree and OUT degree
+"""
+
+def node_degree(node_ID,graph):
+	return np.array([graph.degree(node_ID,mode='IN'),graph.degree(node_ID,mode='OUT')])
