@@ -19,8 +19,9 @@ def Max_Sim(source_ID,target_ID,features,graph,node_dict,metric="COS",n=3):
 		d = sorted([COS( features[index_source].reshape(1,-1), features[i].reshape(1,-1) )[0][0] for i in indices_citers],reverse=True)
 	if len(d)<=2*n:
 		d.extend([0 for i in range(2*n-len(d))])
-	d=d[:n].extend(d[-n:])
-	d.extend([np.mean(d[:n]),np.mean(d[-n:]),np.mean(d)])
+	d1=d[:n]
+	d1.extend(d[-n:])
+	d1.extend([np.mean(d[:n]),np.mean(d[-n:]),np.mean(d)])
 	return np.array(d)
 
 ##############################################################
