@@ -1,26 +1,27 @@
 import numpy as np
+from sklearn.metrics.pairwise import cosine_distances as COS
+from functools import reduce
 
 ##############################################################
-#N-Max-Similarity
+#N-Max-Similarity (by L2 on LSA from source to papers which cite target)
 
 def Euc_Dist(X,Y):
 	return sum( [(X[i]-Y[i])**2 for i in range(len(X))] )**0.5
 
-def Max_Sim(source_ID,target_ID,features,graph,node_dict,n=5):
-    index_source = node_dict[source_ID]
-    citers_graph_indices = graph.predecessors(target_ID)
-    citers_IDs = [graph.vs[i].attributes()['name'] for i in citers_graph_indices]
-    indices_citers = [node_dict[node] for node in citers_IDs]
-    d = sorted([Euc_Dist( features[index_source], features[i] ) for i in indices_citers],reverse=True)
-    if len(d)>=n:
-    	d=d[:n]
-    	d.append(np.mean(d))
-    	return np.array(d)
-    else:
-    	d.extend([0 for i in range(n-len(d))])
-    	d.append(np.mean(d))
-
-    	return np.array( d )
+def Max_Sim(source_ID,target_ID,features,graph,node_dict,metric="COS",n=3):
+	index_source = node_dict[source_ID]
+	citers_graph_indices = graph.predecessors(target_ID)
+	citers_IDs = [graph.vs[i].attributes()['name'] for i in citers_graph_indices]
+	indices_citers = [node_dict[node] for node in citers_IDs]
+	if metric=="L2":
+		d = sorted([Euc_Dist( features[index_source], features[i] ) for i in indices_citers],reverse=True)
+	if metric=="COS":
+		d = sorted([COS( features[index_source].reshape(1,-1), features[i].reshape(1,-1) )[0][0] for i in indices_citers],reverse=True)
+	if len(d)<=2*n:
+		d.extend([0 for i in range(2*n-len(d))])
+	d=d[:n].extend(d[-n:])
+	d.extend([np.mean(d[:n]),np.mean(d[-n:]),np.mean(d)])
+	return np.array(d)
 
 ##############################################################
 #Papers with similar abstracts that also cite the target node
@@ -76,10 +77,13 @@ def edge_check(source_ID, target_ID, graph):
 ##############################################################
 # LSA similarity
 
-def LSA_distance(source_ID,target_ID,node_dict,LSA_array):
+def LSA_distance(source_ID,target_ID,node_dict,LSA_array,metric="COS"):
 	index_source = node_dict[source_ID]
 	index_target = node_dict[target_ID]
-	return Euc_Dist(LSA_array[index_source],LSA_array[index_target])
+	if metric=='COS':
+		return COS(LSA_array[index_source].reshape(1,-1),LSA_array[index_target].reshape(1,-1))[0][0]
+	if metric=='L2':
+		return Euc_Dist(LSA_array[index_source],LSA_array[index_target])
 
 ##############################################################
 #Node degree
@@ -89,3 +93,25 @@ def LSA_distance(source_ID,target_ID,node_dict,LSA_array):
 
 def node_degree(source_ID,target_ID,graph):
 	return np.array([graph.degree(source_ID,mode='IN'),graph.degree(source_ID,mode='OUT'),graph.degree(target_ID,mode='IN'),graph.degree(target_ID,mode='OUT')])
+
+##############################################################
+#Successors(source) intersect successors(predecessors of target) etc.
+"""
+"""
+
+def succ_pred(source_ID,target_ID,graph):
+	succ_source = set(graph.successors(source_ID))
+
+	pred_target = graph.predecessors(target_ID)
+	pred_IDs = [graph.vs[i].attributes()['name'] for i in pred_target if graph.vs[i].attributes()['name']!=source_ID]
+	pred_succ = [set(graph.successors(id)) for id in pred_IDs]
+
+	inter = [succ_source & p_s for p_s in pred_succ]
+	union = [succ_source | p_s for p_s in pred_succ]
+	len_union = [len(x) for x in union]
+	len_inter = [len(x) for x in inter]
+
+	jacc = [len_inter[i]/len_union[i] for i in range(len(len_union))]
+	total_inter = len(reduce(lambda x,y:x|y,inter))
+	stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
+	return stats
