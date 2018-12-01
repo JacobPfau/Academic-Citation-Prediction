@@ -113,6 +113,12 @@ def succ_pred(source_ID,target_ID,graph):
 	len_inter = [len(x) for x in inter]
 
 	jacc = [len_inter[i]/len_union[i] for i in range(len(len_union))]
-	total_inter = len(reduce(lambda x,y:x|y,inter))
-	stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
-	return stats
+	if len(inter)>0:
+		total_inter = len(reduce(lambda x,y:x|y,inter))
+	else:
+		total_inter = 0
+	if len(len_inter)>0:
+		stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
+	else:
+		stats = [0,0,total_inter,0]
+	return np.array(stats)
