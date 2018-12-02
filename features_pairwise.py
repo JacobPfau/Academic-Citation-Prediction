@@ -22,12 +22,12 @@ def Max_Sim(source_ID,target_ID,features,graph,node_dict,metric="COS",n=3):
 	d1=d[:n]
 	d1.extend(d[-n:])
 	d1.extend([np.mean(d[:n]),np.mean(d[-n:]),np.mean(d)])
-	return np.array(d)
+	return np.array(d1)
 
 ##############################################################
 #Papers with similar abstracts that also cite the target node
 
-def Get_K_NN(node_ID,kdtree,features,node_dict,index_dict,k_val=20):
+def Get_K_NN(node_ID,kdtree,features,node_dict,index_dict,k_val=1000):
     """
     @features param3: the array of features i.e. points which were used to build the kdtree
     @node_dict param4: keys are node_IDs, values are node indices
@@ -41,7 +41,7 @@ def Get_K_NN(node_ID,kdtree,features,node_dict,index_dict,k_val=20):
     IDs = [index_dict[i] for i in ind[0]] 
     return (IDs,dist)
 
-def Citation_Check(source_ID,target_ID,kdtree,features,graph,node_dict,index_dict,k=20):
+def Citation_Check(source_ID,target_ID,kdtree,features,graph,node_dict,index_dict,k=1000):
 	"""
     @features param4: the array of features i.e. points which were used to build the kdtree
 	@return: numpy array [% KNN of source which cite target, % KNN of target which are cited by source]
@@ -122,3 +122,38 @@ def succ_pred(source_ID,target_ID,graph):
 	else:
 		stats = [0,0,total_inter,0]
 	return np.array(stats)
+
+##############################################################
+#Successors(source) intersect successors(predecessors of target) etc.
+"""
+@return: np.array([title intersection,time difference, author intersection])
+"""
+
+def baseline(source_ID,target_ID,node_dict,node_info):
+    f=[]
+    
+    index_source = node_dict[source_ID]
+    index_target = node_dict[target_ID]
+    source_info = node_info[index_source]
+    target_info = node_info[index_target]
+    # convert to lowercase and tokenize
+    source_title = source_info[2].lower().split(" ")
+    # remove stopwords
+    source_title = [token for token in source_title if token not in stpwds]
+    source_title = [stemmer.stem(token) for token in source_title]
+
+    target_title = target_info[2].lower().split(" ")
+    target_title = [token for token in target_title if token not in stpwds]
+    target_title = [stemmer.stem(token) for token in target_title]
+    source_auth = source_info[3].split(",")
+    target_auth = target_info[3].split(",") 
+
+    overlap_title = len(set(source_title).intersection(set(target_title)))
+    temp_diff = int(source_info[1]) - int(target_info[1])
+    comm_auth = len(set(source_auth).intersection(set(target_auth)))
+    
+    f.append(len(set(source_title).intersection(set(target_title))))
+    f.append(int(source_info[1]) - int(target_info[1]))
+    f.append(len(set(source_auth).intersection(set(target_auth))))
+    
+    return np.array(f)
