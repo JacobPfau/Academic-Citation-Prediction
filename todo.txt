@@ -1,11 +1,13 @@
 Features:
 normalize variance of features
+word2vec+word movers distance?
+n-grams/n-words tfidf?
+
 Distance between nodes
-word2vec online train+doc2vec distances
 
 Preprocessing:
 author connection graph
-journal citation statistics
+
 
 ML:
 lasso logistic regression with multiplicative/max/min combinations of different features

@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_distances as COS
 from functools import reduce
+import math
 
 ##############################################################
 #N-Max-Similarity (by L2 on LSA from source to papers which cite target)
@@ -41,18 +42,19 @@ def Get_K_NN(node_ID,kdtree,features,node_dict,index_dict,k_val=1000):
     IDs = [index_dict[i] for i in ind[0]] 
     return (IDs,dist)
 
-def Citation_Check(source_ID,target_ID,kdtree,features,graph,node_dict,index_dict,k=1000):
-	"""
+def Citation_Check(source_ID,target_ID,kdtree,features,graph,node_dict,index_dict,k=500):
+    """
     @features param4: the array of features i.e. points which were used to build the kdtree
-	@return: numpy array [% KNN of source which cite target, % KNN of target which are cited by source]
-	"""
-	close_source = Get_K_NN(source_ID,kdtree,features,node_dict,index_dict,k_val=k)[0]
-	close_target = Get_K_NN(target_ID,kdtree,features,node_dict,index_dict,k_val=k)[0]
-	cite_percent = len([n for n in close_source if graph.are_connected(n,target_ID)])/len(close_source)
-	cited_percent = len([n for n in close_target if graph.are_connected(source_ID,n)])/len(close_target)
+    @return: numpy array [% KNN of source which cite target, % KNN of target which are cited by source]
+    """
+    close_source = Get_K_NN(source_ID,kdtree,features,node_dict,index_dict,k_val=k)[0]
+    close_target = Get_K_NN(target_ID,kdtree,features,node_dict,index_dict,k_val=k)[0]
+    cite_percent = len([n for n in close_source if graph.are_connected(n,target_ID)])/len(close_source)
+    w_s_p = sum([math.log2(500-i+1) for i,x in enumerate(close_source) if graph.are_connected(x,target_ID)])/5500
+    w_t_p = sum([math.log2(500-i+1) for i,x in enumerate(close_target) if graph.are_connected(source_ID,x)])/5500
+    cited_percent = len([n for n in close_target if graph.are_connected(source_ID,n)])/len(close_target)
 
-	return np.array([cite_percent,cited_percent])
-
+    return np.array([cite_percent,cited_percent,w_s_p,w_t_p])
 
 
 ##############################################################
