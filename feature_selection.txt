@@ -1,0 +1,39 @@
+Run a random feature selection and then trained models on that
+
+Features:
+0 overlap_title
+1 comm_auth
+2 temp_diff
+3,4 citation_check
+5-13 max_sim
+14 peer_popularity
+15 edge_check
+16-19 succ_pred
+20 LSA_distance
+
+DecisionTrees:
+acc: 0.9274503365621408 f1: 0.9307507874571012
+features:  [0, 4, 14, 18]
+Most frequent features in >0.9 acc classifiers:
+14,20,3,18
+
+Linear SVM:
+acc: 0.9457231981612215 f1: 0.9487743654900989
+features:  [0, 14, 18, 20]
+Most frequent features in >0.9 acc. classifiers:
+14,20,16,18,0
+
+Logistic regression:
+acc: 0.9424560827450337 f1: 0.9457673799687447
+features:  [0, 1, 2, 6, 11, 14, 18, 20]
+Most frequent features in >0.9 acc. classifiers:
+20,18,14,19,0
+
+KNN:
+acc: 0.942176982433098 f1: 0.9457084720680725
+features:  [1, 2, 4, 11, 14, 18, 19, 20]
+Most frequent features in >0.9 acc. classifiers:
+18,20,16,1,0,2,4
+
+Union of most frequent features
+0,1,2,3,4,14,16,18,19,20
