@@ -4,8 +4,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer as Vectorizer
 ##############################################################
 #tfidf
 
-def tfidf(corpus,df=0.5,feats=10000):
-	vectorizer = Vectorizer(max_df=df, max_features=feats, stop_words='english')
+def tfidf(corpus,r= (1,1),df=0.7,feats=10000):
+	vectorizer = Vectorizer(max_df=df, ngram_range=r,max_features=feats, stop_words='english')
 	X = vectorizer.fit_transform(corpus)
 
 	print ("n_samples: %d, n_features: %d" % X.shape)
