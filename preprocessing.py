@@ -1,12 +1,42 @@
 import igraph
 from sklearn.feature_extraction.text import TfidfVectorizer as Vectorizer
 import numpy as np
+import math
+import copy
+
+def all_paths(pairs_array, gold_graph):
+
+    num_chunks = math.ceil(len(pairs_array)/5000)
+    l = len(pairs_array)
+    shortest_paths_dict = dict()
+
+    for k in range(num_chunks):
+        chunk = pairs_array[ k*l : max([(k+1)*l,len(pairs_array)]) ]
+        chunk_removed_graph = copy.copy(gold_graph)
+        to_del = []
+        for triple in chunk:
+            source = triple[0]
+            target = triple[1]
+            if triple[2]=='1':
+                to_del.append((source,target))
+        chunk_removed_graph.delete_edges(to_del)
+
+        sources = set([t[0] for t in chunk])
+        targets = set([t[1] for t in chunk])
+        shortest_paths_array = np.array(chunk_removed_graph.shortest_paths_dijkstra(source = sources, target = targets, mode = 'OUT'))
+        extension_dict = dict(zip( [s for s in sources],[dict(zip( [t for t in targets], row)) for row in shortest_paths_array] ))
+        shortest_paths_dict.update(extension_dict)
+
+        print(k, '/', range(num_chunks))
+
+    return shortest_paths_dict
+
 
 ##############################################################
 #tfidf
 
-def tfidf(corpus,r= (1,1),df=0.7,feats=10000):
-	vectorizer = Vectorizer(max_df=df, ngram_range=r,max_features=feats, stop_words='english')
+def tfidf(corpus, r= (1,1), midf = 3, madf=0.7,feats=10000, sublinear = True):
+	vectorizer = Vectorizer(min_df = midf, max_df=madf, ngram_range=r,max_features=feats, stop_words='english', sublinear_tf = sublinear)
 	X = vectorizer.fit_transform(corpus)
 
 	print ("n_samples: %d, n_features: %d" % X.shape)

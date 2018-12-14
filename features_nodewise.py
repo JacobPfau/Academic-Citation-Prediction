@@ -9,7 +9,7 @@ import numpy as np
 ##############################################################
 #LSA
 
-def LSA(tfidf,n_components=100):
+def LSA(tfidf,n_components=200):
 
 
 	print("Performing dimensionality reduction using LSA")

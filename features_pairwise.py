@@ -3,6 +3,9 @@ from sklearn.metrics.pairwise import cosine_distances as COS
 from functools import reduce
 import math
 
+def path_length(source_ID, target_ID, paths_dict):
+    return paths_dict[source_ID][target_ID]
+
 ##############################################################
 #temp_match
 #How well does the publication year of source fit to the years of other papers that cited target?
