@@ -4,6 +4,30 @@ from functools import reduce
 import math
 
 ##############################################################
+#temp_match
+#How well does the publication year of source fit to the years of other papers that cited target?
+def temp_fit(source_ID, target_ID, graph, node_dict, publication_years):
+    source_year = int(publication_years[node_dict[source_ID]])
+    pred_target = graph.predecessors(target_ID)
+    pred_IDs = [graph.vs[i].attributes()['name'] for i in pred_target if graph.vs[i].attributes()['name']!=source_ID]
+    pred_years = np.array([int(publication_years[node_dict[pred_id]]) for pred_id in pred_IDs])
+    
+    if len(pred_IDs) == 0:
+        # there are no citations. This should occur rarely
+        # Set values worse than anything observed
+        return [20,0]
+    
+    #distance to closest two years with citations
+    if len(pred_IDs) == 1:
+        closest2 = min(abs(pred_years-source_year))
+    else:
+        closest2 = np.mean(np.partition(abs(pred_years-source_year),1)[0:2])
+    #How many citations within +- 1 year of source_year
+    one_year_corridor = len([1 for y in pred_years if (source_year-1 <= y and y <= source_year+1)])/len(pred_IDs)    
+        
+    return [closest2,one_year_corridor]
+
+##############################################################
 #N-Max-Similarity (by L2 on LSA from source to papers which cite target)
 
 def Euc_Dist(X,Y):
@@ -81,12 +105,12 @@ def edge_check(source_ID, target_ID, graph):
 # LSA similarity
 
 def LSA_distance(source_ID,target_ID,node_dict,LSA_array,metric="COS"):
-	index_source = node_dict[source_ID]
-	index_target = node_dict[target_ID]
-	if metric=='COS':
-		return COS(LSA_array[index_source].reshape(1,-1),LSA_array[index_target].reshape(1,-1))[0][0]
-	if metric=='L2':
-		return Euc_Dist(LSA_array[index_source],LSA_array[index_target])
+    index_source = node_dict[source_ID]
+    index_target = node_dict[target_ID]
+    if metric=='COS':
+        return COS(LSA_array[index_source].reshape(1,-1),LSA_array[index_target].reshape(1,-1))[0][0]
+    if metric=='L2':
+        return Euc_Dist(LSA_array[index_source],LSA_array[index_target])
 
 ##############################################################
 #Node degree
