@@ -2,9 +2,11 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_distances as COS
 from functools import reduce
 import math
+import copy
 
 def path_length(source_ID, target_ID, paths_dict):
-    return paths_dict[source_ID][target_ID]
+    # return the path length from source to target or 35 if no path exists (i.e. a length longer than any observed min. path)
+    return min([paths_dict[source_ID][target_ID],35])
 
 ##############################################################
 #temp_match
@@ -130,27 +132,42 @@ def node_degree(source_ID,target_ID,graph):
 """
 
 def succ_pred(source_ID,target_ID,graph):
-	succ_source = set(graph.successors(source_ID))
+    
+    deleted = False
+    try:
+        graph.delete_edge((source_ID,target_ID))
+        deleted = True
+    except:
+        pass
+    
+    succ_source = set(graph.successors(source_ID))
 
-	pred_target = graph.predecessors(target_ID)
-	pred_IDs = [graph.vs[i].attributes()['name'] for i in pred_target if graph.vs[i].attributes()['name']!=source_ID]
-	pred_succ = [set(graph.successors(id)) for id in pred_IDs]
+    pred_target = graph.predecessors(target_ID)
+    pred_IDs = [graph.vs[i].attributes()['name'] for i in pred_target if graph.vs[i].attributes()['name']!=source_ID]
+    pred_succ = [set(graph.successors(id)) for id in pred_IDs]
 
-	inter = [succ_source & p_s for p_s in pred_succ]
-	union = [succ_source | p_s for p_s in pred_succ]
-	len_union = [len(x) for x in union]
-	len_inter = [len(x) for x in inter]
+    inter = [succ_source & p_s for p_s in pred_succ]
+    union = [succ_source | p_s for p_s in pred_succ]
+    len_union = [len(x) for x in union]
+    len_inter = [len(x) for x in inter]
 
-	jacc = [len_inter[i]/len_union[i] for i in range(len(len_union))]
-	if len(inter)>0:
-		total_inter = len(reduce(lambda x,y:x|y,inter))
-	else:
-		total_inter = 0
-	if len(len_inter)>0:
-		stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
-	else:
-		stats = [0,0,total_inter,0]
-	return np.array(stats)
+    jacc = [len_inter[i]/len_union[i] for i in range(len(len_union))]
+    if len(inter)>0:
+    	total_inter = len(reduce(lambda x,y:x|y,inter))
+    else:
+    	total_inter = 0
+    if len(len_inter)>0:
+    	stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
+    else:
+    	stats = [0,0,total_inter,0]
+
+    if deleted == True:
+        graph.add_edge((source_ID,target_ID))
+        deleted = False
+
+    return np.array(stats)
+
+
 
 ##############################################################
 #Successors(source) intersect successors(predecessors of target) etc.

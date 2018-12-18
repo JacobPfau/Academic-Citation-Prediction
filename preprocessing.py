@@ -3,31 +3,44 @@ from sklearn.feature_extraction.text import TfidfVectorizer as Vectorizer
 import numpy as np
 import math
 import copy
+import random
 
-def all_paths(pairs_array, gold_graph):
+def all_paths(pairs_array, gold_graph, pairs_subset_edges=True, chunk_size=350):
+    '''
+    @pairs_subset_edges: indicates whether the pairs in pairs_array were used to construct the gold_graph. (i.e. usually true for training set, and false for competition set)
+    '''
 
-    num_chunks = math.ceil(len(pairs_array)/5000)
+    random.shuffle(pairs_array)
+    num_chunks = math.ceil(len(pairs_array)/chunk_size)
     l = len(pairs_array)
-    shortest_paths_dict = dict()
+    sources = set([t[0] for t in pairs_array])
+    shortest_paths_dict = {s: dict() for s in sources}
 
     for k in range(num_chunks):
-        chunk = pairs_array[ k*l : max([(k+1)*l,len(pairs_array)]) ]
+        chunk = pairs_array[ k*chunk_size : min([(k+1)*chunk_size,len(pairs_array)]) ]
+
         chunk_removed_graph = copy.copy(gold_graph)
-        to_del = []
-        for triple in chunk:
-            source = triple[0]
-            target = triple[1]
-            if triple[2]=='1':
-                to_del.append((source,target))
-        chunk_removed_graph.delete_edges(to_del)
 
-        sources = set([t[0] for t in chunk])
-        targets = set([t[1] for t in chunk])
+        if pairs_subset_edges==True:
+            to_del = []
+            for triple in chunk:
+                source = triple[0]
+                target = triple[1]
+                if triple[2]=='1':
+                    to_del.append((source,target))
+            chunk_removed_graph.delete_edges(to_del)
+
+        sources = list(set([t[0] for t in chunk]))
+        targets = list(set([t[1] for t in chunk]))
         shortest_paths_array = np.array(chunk_removed_graph.shortest_paths_dijkstra(source = sources, target = targets, mode = 'OUT'))
-        extension_dict = dict(zip( [s for s in sources],[dict(zip( [t for t in targets], row)) for row in shortest_paths_array] ))
-        shortest_paths_dict.update(extension_dict)
 
-        print(k, '/', range(num_chunks))
+        extension_dict = dict(zip( [s for s in sources],[dict(zip( [t for t in targets], row)) for row in shortest_paths_array] ))
+
+        for pair in chunk:
+            shortest_paths_dict[pair[0]][pair[1]] = extension_dict[pair[0]][pair[1]]
+
+        if k%20==0:
+            print(k, '/', num_chunks)
 
     return shortest_paths_dict
 
