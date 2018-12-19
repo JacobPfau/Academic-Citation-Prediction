@@ -4,6 +4,40 @@ from functools import reduce
 import math
 import copy
 
+def by_chunk(pairs_array,gold_graph, kdtree,features,node_dict,index_dict, pairs_subset_edges=True, chunk_size=1000, k_cc=500, metric_ms='COS', n_ms=3):
+    num_chunks = math.ceil(len(pairs_array)/chunk_size)
+    l = len(pairs_array)
+    sp = []
+    ms = []
+    cc = []
+
+    for k in range(num_chunks):
+        chunk = pairs_array[ k*chunk_size : min([(k+1)*chunk_size,len(pairs_array)]) ]
+        chunk_removed_graph = copy.copy(gold_graph)
+
+        if pairs_subset_edges==True:
+            to_del = []
+            for triple in chunk:
+                source = triple[0]
+                target = triple[1]
+                if triple[2]=='1':
+                    to_del.append((source,target))
+            chunk_removed_graph.delete_edges(to_del)
+
+        for triple in chunk:
+            source_ID = triple[0]
+            target_ID = triple[1]
+            # sp.append(succ_pred(source_ID,target_ID,chunk_removed_graph))
+            ms.append(Max_Sim(source_ID,target_ID,features,chunk_removed_graph,node_dict,metric=metric_ms,n=n_ms))
+            cc.append(Citation_Check(source_ID,target_ID,kdtree,features,chunk_removed_graph,node_dict,index_dict,k=k_cc))
+
+        print(k, '/', num_chunks)
+
+    return (ms,cc)
+
+
+
+
 def path_length(source_ID, target_ID, paths_dict):
     # return the path length from source to target or 35 if no path exists (i.e. a length longer than any observed min. path)
     return min([paths_dict[source_ID][target_ID],35])
@@ -127,18 +161,13 @@ def node_degree(source_ID,target_ID,graph):
 	return np.array([graph.degree(source_ID,mode='IN'),graph.degree(source_ID,mode='OUT'),graph.degree(target_ID,mode='IN'),graph.degree(target_ID,mode='OUT')])
 
 ##############################################################
-#Successors(source) intersect successors(predecessors of target) etc.
+# SEE PREPROCESSING FOR NEW VERSION OF SUCCPRED
+################################################
+# Successors(source) intersect successors(predecessors of target) etc.
 """
 """
 
 def succ_pred(source_ID,target_ID,graph):
-    
-    deleted = False
-    try:
-        graph.delete_edge((source_ID,target_ID))
-        deleted = True
-    except:
-        pass
     
     succ_source = set(graph.successors(source_ID))
 
@@ -160,10 +189,6 @@ def succ_pred(source_ID,target_ID,graph):
     	stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
     else:
     	stats = [0,0,total_inter,0]
-
-    if deleted == True:
-        graph.add_edge((source_ID,target_ID))
-        deleted = False
 
     return np.array(stats)
 
