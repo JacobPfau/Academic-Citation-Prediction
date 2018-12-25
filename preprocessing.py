@@ -1,12 +1,104 @@
 import igraph
 from sklearn.feature_extraction.text import TfidfVectorizer as Vectorizer
 import numpy as np
+import math
+import copy
+import random
+from functools import reduce
+
+# def succ_pred(pairs_array,gold_graph,pairs_subset_edges=True, chunk_size=1000):
+#     num_chunks = math.ceil(len(pairs_array)/chunk_size)
+#     l = len(pairs_array)
+#     sp = []
+
+#     for k in range(num_chunks):
+#         chunk = pairs_array[ k*chunk_size : min([(k+1)*chunk_size,len(pairs_array)]) ]
+#         chunk_removed_graph = copy.copy(gold_graph)
+
+#         if pairs_subset_edges==True:
+#             to_del = []
+#             for triple in chunk:
+#                 source = triple[0]
+#                 target = triple[1]
+#                 if triple[2]=='1':
+#                     to_del.append((source,target))
+#             chunk_removed_graph.delete_edges(to_del)
+
+#         for triple in chunk:
+#             source_ID = triple[0]
+#             target_ID = triple[1]
+#             succ_source = set(chunk_removed_graph.successors(source_ID))
+
+#             pred_target = chunk_removed_graph.predecessors(target_ID)
+#             pred_IDs = [chunk_removed_graph.vs[i].attributes()['name'] for i in pred_target if chunk_removed_graph.vs[i].attributes()['name']!=source_ID]
+#             pred_succ = [set(chunk_removed_graph.successors(id)) for id in pred_IDs]
+
+#             inter = [succ_source & p_s for p_s in pred_succ]
+#             union = [succ_source | p_s for p_s in pred_succ]
+#             len_union = [len(x) for x in union]
+#             len_inter = [len(x) for x in inter]
+
+#             jacc = [len_inter[i]/len_union[i] for i in range(len(len_union))]
+#             if len(inter)>0:
+#                 total_inter = len(reduce(lambda x,y:x|y,inter))
+#             else:
+#                 total_inter = 0
+#             if len(len_inter)>0:
+#                 stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
+#             else:
+#                 stats = [0,0,total_inter,0]
+
+#             sp.append(stats)
+
+#         print(k, '/', num_chunks)
+            
+#     return sp
+
+def all_paths(pairs_array, gold_graph, pairs_subset_edges=True, chunk_size=350):
+    '''
+    @pairs_subset_edges: indicates whether the pairs in pairs_array were used to construct the gold_graph. (i.e. usually true for training set, and false for competition set)
+    '''
+
+    random.shuffle(pairs_array)
+    num_chunks = math.ceil(len(pairs_array)/chunk_size)
+    l = len(pairs_array)
+    sources = set([t[0] for t in pairs_array])
+    shortest_paths_dict = {s: dict() for s in sources}
+
+    for k in range(num_chunks):
+        chunk = pairs_array[ k*chunk_size : min([(k+1)*chunk_size,len(pairs_array)]) ]
+
+        chunk_removed_graph = copy.copy(gold_graph)
+
+        if pairs_subset_edges==True:
+            to_del = []
+            for triple in chunk:
+                source = triple[0]
+                target = triple[1]
+                if triple[2]=='1':
+                    to_del.append((source,target))
+            chunk_removed_graph.delete_edges(to_del)
+
+        sources = list(set([t[0] for t in chunk]))
+        targets = list(set([t[1] for t in chunk]))
+        shortest_paths_array = np.array(chunk_removed_graph.shortest_paths_dijkstra(source = sources, target = targets, mode = 'OUT'))
+
+        extension_dict = dict(zip( [s for s in sources],[dict(zip( [t for t in targets], row)) for row in shortest_paths_array] ))
+
+        for pair in chunk:
+            shortest_paths_dict[pair[0]][pair[1]] = extension_dict[pair[0]][pair[1]]
+
+        if k%20==0:
+            print(k, '/', num_chunks)
+
+    return shortest_paths_dict
+
 
 ##############################################################
 #tfidf
 
-def tfidf(corpus,r= (1,1),df=0.7,feats=10000):
-	vectorizer = Vectorizer(max_df=df, ngram_range=r,max_features=feats, stop_words='english')
+def tfidf(corpus, r= (1,1), midf = 3, madf=0.7,feats=10000, sublinear = True):
+	vectorizer = Vectorizer(min_df = midf, max_df=madf, ngram_range=r,max_features=feats, stop_words='english', sublinear_tf = sublinear)
 	X = vectorizer.fit_transform(corpus)
 
 	print ("n_samples: %d, n_features: %d" % X.shape)
