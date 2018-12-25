@@ -27,7 +27,7 @@ class Evaluation:
         return self.true_pos / (self.true_pos + self.false_neg)
     
     def precision(self):
-        return self.true_pos / self.total
+        return self.true_pos / (self.true_pos + self.false_pos)
     
     def F1(self):
         return 2*(self.precision()*self.recall()) / (self.precision()+self.recall())
@@ -46,4 +46,10 @@ class Evaluation:
                     self.false_pos += 1
                 else:
                     self.false_neg += 1
+    
+    def print_metrics(self):
+        print("accuracy: ",self.accuracy())
+        print("recall:   ",self.recall())
+        print("precision:",self.precision())
+        print("F1:       ",self.F1())
         
