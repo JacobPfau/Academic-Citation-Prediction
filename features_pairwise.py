@@ -4,12 +4,13 @@ from functools import reduce
 import math
 import copy
 
-def by_chunk(pairs_array,gold_graph, kdtree,features,node_dict,index_dict, pairs_subset_edges=True, chunk_size=1000, k_cc=500, metric_ms='COS', n_ms=3):
+def by_chunk(pairs_array, gold_graph, kdtree, features,node_dict, index_dict, pairs_subset_edges=True, chunk_size=1000, to_do = {'succ_pred':True, 'Max_Sim':True, 'Citation_Check':True, 'node_degree':True}, k_cc=500, metric_ms='COS', n_ms=3):
     num_chunks = math.ceil(len(pairs_array)/chunk_size)
     l = len(pairs_array)
     sp = []
     ms = []
     cc = []
+    nd = []
 
     for k in range(num_chunks):
         chunk = pairs_array[ k*chunk_size : min([(k+1)*chunk_size,len(pairs_array)]) ]
@@ -27,13 +28,18 @@ def by_chunk(pairs_array,gold_graph, kdtree,features,node_dict,index_dict, pairs
         for triple in chunk:
             source_ID = triple[0]
             target_ID = triple[1]
-            # sp.append(succ_pred(source_ID,target_ID,chunk_removed_graph))
-            ms.append(Max_Sim(source_ID,target_ID,features,chunk_removed_graph,node_dict,metric=metric_ms,n=n_ms))
-            cc.append(Citation_Check(source_ID,target_ID,kdtree,features,chunk_removed_graph,node_dict,index_dict,k=k_cc))
+            if to_do['succ_pred']==True:
+                sp.append(succ_pred(source_ID,target_ID,chunk_removed_graph))
+            if to_do['Max_Sim']==True:
+                ms.append(Max_Sim(source_ID,target_ID,features,chunk_removed_graph,node_dict,metric=metric_ms,n=n_ms))
+            if to_do['Citation_Check']==True:
+                cc.append(Citation_Check(source_ID,target_ID,kdtree,features,chunk_removed_graph,node_dict,index_dict,k=k_cc))
+            if to_do['node_degree']==True:
+                nd.append(node_degree(source_ID,target_ID,chunk_removed_graph))
 
         print(k, '/', num_chunks)
 
-    return (ms,cc)
+    return (sp,ms,cc,nd)
 
 
 
@@ -87,6 +93,25 @@ def Max_Sim(source_ID,target_ID,features,graph,node_dict,metric="COS",n=3):
 	d1.extend(d[-n:])
 	d1.extend([np.mean(d[:n]),np.mean(d[-n:]),np.mean(d)])
 	return np.array(d1)
+
+##############################################################
+#Reverse-N-Max-Similarity (by L2 on LSA from target to papers which are cited by source)
+
+def Reverse_Max_Sim(source_ID,target_ID,features,graph,node_dict,metric="COS",n=3):
+    index_target = node_dict[target_ID]
+    citees_graph_indices = graph.successors(source_ID)
+    citees_IDs = [graph.vs[i].attributes()['name'] for i in citees_graph_indices]
+    indices_citees = [node_dict[node] for node in citees_IDs]
+    if metric=="L2":
+        d = sorted([Euc_Dist( features[index_target], features[i] ) for i in indices_citees],reverse=True)
+    if metric=="COS":
+        d = sorted([COS( features[index_target].reshape(1,-1), features[i].reshape(1,-1) )[0][0] for i in indices_citees],reverse=True)
+    if len(d)<=2*n:
+        d.extend([0 for i in range(2*n-len(d))])
+    d1=d[:n]
+    d1.extend(d[-n:])
+    d1.extend([np.mean(d[:n]),np.mean(d[-n:]),np.mean(d)])
+    return np.array(d1)
 
 ##############################################################
 #Papers with similar abstracts that also cite the target node

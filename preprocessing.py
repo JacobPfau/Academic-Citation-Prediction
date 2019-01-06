@@ -57,8 +57,8 @@ from functools import reduce
 def all_paths(pairs_array, gold_graph, pairs_subset_edges=True, chunk_size=350):
     '''
     @pairs_subset_edges: indicates whether the pairs in pairs_array were used to construct the gold_graph. (i.e. usually true for training set, and false for competition set)
+    @pairs_array: must be a list of lists (NOT np arrays)
     '''
-
     random.shuffle(pairs_array)
     num_chunks = math.ceil(len(pairs_array)/chunk_size)
     l = len(pairs_array)
