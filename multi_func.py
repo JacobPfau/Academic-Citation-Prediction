@@ -11,7 +11,7 @@ class params:
         self.l = l
         self.node_dict = node_dict
         self.index_dict = index_dict
-        self.pairs_subset_edges = True
+        self.pairs_subset_edges = pairs_subset_edges
         self.chunk_size = chunk_size
         self.to_do = to_do
         self.k_cc = k_cc
@@ -26,7 +26,7 @@ class params:
         return out
     
     def all_paths_noparams(self, pairs_list):
-        return prep.all_paths(pairs_list, self.gold_graph)
+        return prep.all_paths(pairs_list, self.gold_graph, pairs_subset_edges=self.pairs_subset_edges)
     
     def test(self, input_list):
         return input_list+2
