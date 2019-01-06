@@ -131,6 +131,15 @@ def article_graph(node_IDs, edges):
     return g
 
 
+# Returns a numpy array where 
+# each column corresponds to one feature,
+# each line corresponds to a node pair
+def to_feature_shape(feat):
+    feat = np.array(feat)
+    if len(feat.shape) == 1:#if it's just a long list
+        feat = np.reshape(feat,(feat.shape[0],1))
+    return feat
+
 
 # Computes |journals| x |journals| matrices (rows = sources)
 # which give features about how papers from journals cite each other
