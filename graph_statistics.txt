@@ -1,0 +1,10 @@
+Graph statistics:
+# nodes in node_info: 27770
+# total possible edges: 385572565
+# given 0-edges: 280382 (in training_set)
+# given 1-edges: 335130 (in training_set)
+density (#given1 / #given0) in the given edges: 0.544
+fraction of given edges (0 or 1) out of the total possible edges: 0.00159
+
+Information statistics:
+284 different journals + the empty ‘’ journal
