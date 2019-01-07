@@ -3,14 +3,19 @@ from sklearn.metrics.pairwise import cosine_distances as COS
 from functools import reduce
 import math
 import copy
+import multiprocessing as mp
+import multi_func as mf
+import preprocessing as prep
 
-def by_chunk(pairs_array, gold_graph, kdtree, features,node_dict, index_dict, pairs_subset_edges=True, chunk_size=1000, to_do = {'succ_pred':True, 'Max_Sim':True, 'Citation_Check':True, 'node_degree':True}, k_cc=500, metric_ms='COS', n_ms=3):
+
+def by_chunk(pairs_array, gold_graph, kdtree, features, node_dict, index_dict, pairs_subset_edges=True, chunk_size=1000, to_do = {'succ_pred':True, 'max_sim':True, 'citation_check':True, 'node_degree':True, 'reverse_max_sim':True}, k_cc=500, metric_ms='COS', n_ms=3):
     num_chunks = math.ceil(len(pairs_array)/chunk_size)
     l = len(pairs_array)
     sp = []
     ms = []
     cc = []
     nd = []
+    rm = []
 
     for k in range(num_chunks):
         chunk = pairs_array[ k*chunk_size : min([(k+1)*chunk_size,len(pairs_array)]) ]
@@ -30,16 +35,18 @@ def by_chunk(pairs_array, gold_graph, kdtree, features,node_dict, index_dict, pa
             target_ID = triple[1]
             if to_do['succ_pred']==True:
                 sp.append(succ_pred(source_ID,target_ID,chunk_removed_graph))
-            if to_do['Max_Sim']==True:
+            if to_do['max_sim']==True:
                 ms.append(Max_Sim(source_ID,target_ID,features,chunk_removed_graph,node_dict,metric=metric_ms,n=n_ms))
-            if to_do['Citation_Check']==True:
+            if to_do['citation_check']==True:
                 cc.append(Citation_Check(source_ID,target_ID,kdtree,features,chunk_removed_graph,node_dict,index_dict,k=k_cc))
             if to_do['node_degree']==True:
                 nd.append(node_degree(source_ID,target_ID,chunk_removed_graph))
+            if to_do['reverse_max_sim']==True:
+                rm.append(Reverse_Max_Sim(source_ID, target_ID, features, chunk_removed_graph, node_dict))
 
         print(k, '/', num_chunks)
 
-    return (sp,ms,cc,nd)
+    return (sp,ms,cc,nd,rm)
 
 
 
@@ -185,12 +192,9 @@ def LSA_distance(source_ID,target_ID,node_dict,LSA_array,metric="COS"):
 def node_degree(source_ID,target_ID,graph):
 	return np.array([graph.degree(source_ID,mode='IN'),graph.degree(source_ID,mode='OUT'),graph.degree(target_ID,mode='IN'),graph.degree(target_ID,mode='OUT')])
 
-##############################################################
-# SEE PREPROCESSING FOR NEW VERSION OF SUCCPRED
+
 ################################################
 # Successors(source) intersect successors(predecessors of target) etc.
-"""
-"""
 
 def succ_pred(source_ID,target_ID,graph):
     
@@ -253,3 +257,137 @@ def baseline(source_ID,target_ID,node_dict,node_info):
     f.append(len(set(source_auth).intersection(set(target_auth))))
     
     return np.array(f)
+
+
+
+###################################################################
+# compute_all_features
+#
+# Wrapper to compute all our features
+# Returns a dict containing a numpy array for each feature
+#
+def compute_all_features(node_pair_set, 
+                         graph, 
+                         IDs,
+                         node_info,
+                         stemmer,
+                         stpwds,
+                         kdtree, 
+                         l, 
+                         l_ngrams,
+                         t_titles,
+                         node_dict, 
+                         index_dict,
+                         pairs_subset_edges,
+                         publication_years):
+    
+    features_to_create = ['overlap_title',
+                      'comm_auth',
+                      'temp_diff',
+                      'citation_check',
+                      'max_sim',
+                      'peer_popularity',
+                      'succ_pred',
+                      'LSA_distance',
+                      'title_sim',
+                      'temporal_fit',
+                      'N_LSA_distance',
+                      'path_length',
+                      'node_degree',
+                      'reverse_max_sim']
+    
+    # We insert features in a dictionary
+    insert_features_dict = dict()
+    for feat in features_to_create:
+        insert_features_dict[feat] = []
+    set_to_use = node_pair_set
+
+    # Compute some features in parallelized chunks.
+    p = mf.params(graph, kdtree, l, node_dict, index_dict, pairs_subset_edges, chunk_size = 1000)
+    grouped_set = [set_to_use[2000*i:2000*(i+1)] for i in range(math.ceil(len(set_to_use)/2000))]
+    pool = mp.Pool(mp.cpu_count())
+    path_dict_list = pool.map(p.all_paths_noparams, grouped_set, chunksize = 10)
+    chunked_output = zip(*pool.map(p.by_chunk_noparams, grouped_set, chunksize = 10))
+    pool.close()
+
+    # Recombine chunked output
+    all_path_dict = dict()
+    for i in IDs:
+        all_path_dict[i] = dict()
+
+    for d in path_dict_list:
+        for source_id in d:
+            for target_id in d[source_id]:
+                all_path_dict[source_id][target_id] = d[source_id][target_id]
+
+    list_chunked_output = list(chunked_output)
+    for feature_list in list_chunked_output[0]:
+        insert_features_dict['succ_pred'].extend(feature_list)
+    for feature_list in list_chunked_output[1]:
+        insert_features_dict['max_sim'].extend(feature_list)
+    for feature_list in list_chunked_output[2]:
+        insert_features_dict['citation_check'].extend(feature_list)
+    for feature_list in list_chunked_output[3]:
+        insert_features_dict['node_degree'].extend(feature_list)
+    for feature_list in list_chunked_output[4]:
+        insert_features_dict['reverse_max_sim'].extend(feature_list)
+
+
+    # Compute other features per node pair
+    for i,triple in enumerate(set_to_use):
+
+        # Read basic data about the current node pair
+        source = triple[0]
+        target = triple[1]
+        index_source = node_dict[source]
+        index_target = node_dict[target]
+
+        source_info = node_info[index_source]
+        target_info = node_info[index_target]
+
+        source_title = source_info[2].lower().split(" ")
+        source_title = [token for token in source_title if token not in stpwds]
+        source_title = [stemmer.stem(token) for token in source_title]
+
+        target_title = target_info[2].lower().split(" ")
+        target_title = [token for token in target_title if token not in stpwds]
+        target_title = [stemmer.stem(token) for token in target_title]
+
+        source_auth = source_info[3].split(",")
+        target_auth = target_info[3].split(",") 
+
+        # Creating features
+        overlap_title = len(set(source_title).intersection(set(target_title)))
+        insert_features_dict["overlap_title"].append(overlap_title)
+        temp_diff = int(source_info[1]) - int(target_info[1])
+        insert_features_dict["temp_diff"].append(temp_diff)
+        comm_auth = len(set(source_auth).intersection(set(target_auth)))
+        insert_features_dict["comm_auth"].append(comm_auth)
+
+        peer_pop = peer_popularity(graph,source,target)
+        insert_features_dict["peer_popularity"].append(peer_pop)
+
+        LSA_dist = LSA_distance(source,target,node_dict,l)
+        insert_features_dict["LSA_distance"].append(LSA_dist)
+
+        title_weighted = t_titles.getrow(index_source).dot(t_titles.getrow(index_target).transpose())[0,0]
+        insert_features_dict["title_sim"].append(title_weighted)
+
+        N_LSA_dist = LSA_distance(source,target,node_dict,l_ngrams)
+        insert_features_dict["N_LSA_distance"].append(N_LSA_dist)
+
+        temporal_fit = temp_fit(source,target,graph,node_dict,publication_years)
+        insert_features_dict["temporal_fit"].append(temporal_fit)
+
+        path_length_value = path_length(source, target, all_path_dict)
+        insert_features_dict["path_length"].append(path_length_value)
+
+        if i%1000==0:
+            print(i,"/",len(set_to_use))
+
+    # Reshape features into np column arrays, one row per node pair
+    for (name,value) in insert_features_dict.items():
+        print(name,len(value))
+        insert_features_dict[name] = prep.to_feature_shape(value)
+    
+    return insert_features_dict
