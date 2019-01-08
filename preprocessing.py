@@ -6,53 +6,6 @@ import copy
 import random
 from functools import reduce
 
-# def succ_pred(pairs_array,gold_graph,pairs_subset_edges=True, chunk_size=1000):
-#     num_chunks = math.ceil(len(pairs_array)/chunk_size)
-#     l = len(pairs_array)
-#     sp = []
-
-#     for k in range(num_chunks):
-#         chunk = pairs_array[ k*chunk_size : min([(k+1)*chunk_size,len(pairs_array)]) ]
-#         chunk_removed_graph = copy.copy(gold_graph)
-
-#         if pairs_subset_edges==True:
-#             to_del = []
-#             for triple in chunk:
-#                 source = triple[0]
-#                 target = triple[1]
-#                 if triple[2]=='1':
-#                     to_del.append((source,target))
-#             chunk_removed_graph.delete_edges(to_del)
-
-#         for triple in chunk:
-#             source_ID = triple[0]
-#             target_ID = triple[1]
-#             succ_source = set(chunk_removed_graph.successors(source_ID))
-
-#             pred_target = chunk_removed_graph.predecessors(target_ID)
-#             pred_IDs = [chunk_removed_graph.vs[i].attributes()['name'] for i in pred_target if chunk_removed_graph.vs[i].attributes()['name']!=source_ID]
-#             pred_succ = [set(chunk_removed_graph.successors(id)) for id in pred_IDs]
-
-#             inter = [succ_source & p_s for p_s in pred_succ]
-#             union = [succ_source | p_s for p_s in pred_succ]
-#             len_union = [len(x) for x in union]
-#             len_inter = [len(x) for x in inter]
-
-#             jacc = [len_inter[i]/len_union[i] for i in range(len(len_union))]
-#             if len(inter)>0:
-#                 total_inter = len(reduce(lambda x,y:x|y,inter))
-#             else:
-#                 total_inter = 0
-#             if len(len_inter)>0:
-#                 stats = [max(len_inter),np.mean(len_inter),total_inter,max(jacc)]
-#             else:
-#                 stats = [0,0,total_inter,0]
-
-#             sp.append(stats)
-
-#         print(k, '/', num_chunks)
-            
-#     return sp
 
 def all_paths(pairs_array, gold_graph, pairs_subset_edges=True, chunk_size=350):
     '''

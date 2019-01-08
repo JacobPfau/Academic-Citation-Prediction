@@ -4,8 +4,8 @@ import preprocessing as prep
 class params:
     
     def  __init__(self,gold_graph, kdtree,l,node_dict,index_dict,pairs_subset_edges=True, 
-                          chunk_size=1000,to_do = {'succ_pred':True, 'Max_Sim':True, 'Citation_Check':True, 
-                                                   'node_degree':True, 'Reverse_Max_Sim':False}, k_cc=500, metric_ms='COS', n_ms=3):
+                          chunk_size=1000,to_do = {'succ_pred':True, 'max_sim':True, 'citation_check':True, 
+                                                   'node_degree':True, 'reverse_max_sim':True}, k_cc=500, metric_ms='COS', n_ms=3):
         self.gold_graph = gold_graph
         self.kdtree = kdtree
         self.l = l
