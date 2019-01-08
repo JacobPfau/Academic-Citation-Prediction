@@ -1,7 +1,11 @@
+Presentation:
+Visualize LGBM
+Explain LGBM
+
 Features:
 
 recompute with k=1000 for citation check
-compute edges for large number of 'other' pairs
+compute features for large number of 'other' pairs
 normalize for variance (doesn't seem to have big effect on peer popularity)
 
 NOTES:
