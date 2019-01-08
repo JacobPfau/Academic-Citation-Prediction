@@ -1,14 +1,11 @@
 Features:
-normalize variance of features
-word2vec+word movers distance?
-how many papers in year n cite target
 
-Distance between nodes
+recompute with k=1000 for citation check
+compute edges for large number of 'other' pairs
+normalize for variance (doesn't seem to have big effect on peer popularity)
 
-Preprocessing:
-author connection graph
-
-
-ML:
-lasso logistic regression with multiplicative/max/min combinations of different features
-fix decision tree parameters
+NOTES:
+By error overlap determined that max sim and citation check with ngrams vs single words negligible difference
+tested raw LSA vector pairs as input to classifying perceptron failed (similarly supervised tfidf weighting by discriminatory capacity of terms performs <1% better according to pepper)
+polynomial features didn't work
+journal % citations didn't workv
